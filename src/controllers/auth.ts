@@ -6,6 +6,9 @@ import { Controller } from "@/types/types.controller-type";
 import { userModel } from '../models/User';
 import { generateId } from '../utils/helper';
 import { CreateUserData, User } from '@/types/interface.user';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Types for Google OAuth
 interface GoogleProfile {
@@ -175,6 +178,12 @@ const googleLogin: Controller = async (req, res) => {
 const googleCallback = async (req: Request, res: Response, next: NextFunction) => {
 
   passport.authenticate('google', (err: any, user: User, info: any) => {
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name }, // add more fields if needed
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
     if (err) {
       console.error('Google OAuth error:', err);
       console.error('Error details:', {
@@ -214,7 +223,8 @@ const googleCallback = async (req: Request, res: Response, next: NextFunction) =
                   id: '${user.id}',
                   email: '${user.email}',
                   name: '${user.name}',
-                  avatar: '${user.avatar || ''}'
+                  avatar: '${user.avatar || ''}',
+                  token: '${token}'
                 }
               }, 'http://localhost:5173');
               window.close();
@@ -272,6 +282,11 @@ const githubLogin: Controller = async (req, res) => {
 const githubCallback = async (req: Request, res: Response, next: NextFunction) => {
 
   passport.authenticate('github', (err: any, user: User, info: any) => {
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name }, // add more fields if needed
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
     if (err) {
       console.error('GitHub OAuth error:', err);
       return res.redirect('/login?error=oauth_error&message=' + encodeURIComponent(err.message));
@@ -303,7 +318,8 @@ const githubCallback = async (req: Request, res: Response, next: NextFunction) =
                   id: '${user.id}',
                   email: '${user.email}',
                   name: '${user.name}',
-                  avatar: '${user.avatar || ''}'
+                  avatar: '${user.avatar || ''}',
+                  token: '${token}'
                 }
               }, 'http://localhost:5173');
               window.close();

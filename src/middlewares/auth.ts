@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { userModel } from '../models/User';
 import { User } from '@/types/interface.user';
+import csrf from 'csurf';
 
 // Extend Express Request interface to include user
 declare global {
@@ -10,6 +11,8 @@ declare global {
     }
   }
 }
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Authentication middleware interface
 interface AuthMiddleware {
@@ -252,6 +255,11 @@ const validateSocialLogin = (providers: SocialProvider[] = ['google', 'github'])
   };
 };
 
+const csrfProtection = csrf({
+  cookie: false,
+  value: (req) => req.headers['x-csrf-token'] as string
+});
+
 // Export all middleware functions
 export {
   isAuthenticated,
@@ -261,6 +269,7 @@ export {
   optionalAuth,
   authRateLimit,
   validateSocialLogin,
+  csrfProtection,
   type SocialProvider,
   type UserSession
 };

@@ -69,6 +69,12 @@ authRouter.get('/auth/google/callback', googleCallback);
 authRouter.get('/auth/github', githubLogin);
 authRouter.get('/auth/github/callback', githubCallback);
 
+authRouter.get('/csrf-token', (req, res) => {
+  const token = req.csrfToken();
+  console.log('Generated CSRF Token for client: ', token);
+  res.json({ csrfToken: token });
+});
+
 // Logout route (works for both Google and GitHub)
 authRouter.post('/logout', logout);
 

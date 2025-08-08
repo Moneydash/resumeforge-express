@@ -13,13 +13,15 @@ ResumeForge Express provides secure, passwordless authentication via Google and 
 ## Features
 
 - **Google & GitHub OAuth authentication** (no password login)
-- **MySQL database integration** with Knex.js
-- **PDF generation** from user-provided HTML using Puppeteer
-- **Session management** with secure cookies
-- **Role-based and resource-based access control**
+- **MySQL database integration** with Knex.js ORM
+- **PDF generation** from HTML using Puppeteer with multiple resume templates
+- **Resume management** (create, read, update, delete, clone, rename)
+- **Session management** with secure cookies and CSRF protection
+- **Rate limiting** for authentication and PDF generation endpoints
+- **Input validation** and sanitization for security
 - **CORS support** for frontend integration
-- **TypeScript** for type safety
-- **Database migrations** for schema management
+- **TypeScript** for type safety and better developer experience
+- **Database migrations** for schema management and versioning
 
 ---
 
@@ -101,47 +103,58 @@ The server will start on `http://localhost:8080`
 ## API Endpoints
 
 ### Authentication
+- `GET /` - Root route, redirects based on auth status
+- `GET /login` - Login page (returns available providers)
 - `GET /auth/google` - Initiate Google OAuth login
 - `GET /auth/google/callback` - Google OAuth callback
 - `GET /auth/github` - Initiate GitHub OAuth login
 - `GET /auth/github/callback` - GitHub OAuth callback
-- `GET /auth/login` - Login page (returns available providers)
-- `GET /auth/logout` - Logout user
-- `GET /auth/` - Root route, redirects based on auth status
+- `POST /logout` - Logout user
+- `GET /auth-status` - Check authentication status
+- `GET /dashboard` - Protected dashboard route
+- `GET /profile` - Get user profile (requires authentication)
+- `GET /csrf-token` - Get CSRF token for secure requests
+- `GET /db-test` - Test database connection
 
-### Resume Data & PDF
-- `POST /generate` - Generate PDF from HTML (requires Google & GitHub login)
-- `POST /resume/save` - Save or update user resume data (requires authentication)
-- `GET /resume/data` - Fetch user resume data (requires authentication)
+### Resume Management
+- `POST /resume/generate` - Generate PDF from HTML (requires authentication)
+- `POST /resume/save-data` - Save or update user resume data (requires authentication)
+- `GET /resume/fetch-data/:id/:userId` - Fetch specific resume data (requires authentication)
+- `GET /resume/fetch-resumes/:userId` - Fetch all resumes for a user (requires authentication)
+- `POST /resume/create-init/:userId` - Create a new empty resume (requires authentication)
+- `POST /resume/rename/:id/:userId` - Rename an existing resume (requires authentication)
+- `POST /resume/clone/:id/:userId` - Clone an existing resume (requires authentication)
+- `DELETE /resume/delete-resume/:id/:userId` - Delete a resume (requires authentication)
 
 ---
 
 ## Project Structure
 
-```
+```bash
 src/
 ├── controllers/
-│   ├── auth.ts          # Authentication controllers
-│   └── resume.ts        # Resume data and PDF generation controllers
+│   ├── auth.ts          # OAuth authentication controllers (Google & GitHub)
+│   ├── resume.ts        # Resume CRUD operations controllers
+│   └── pdf.ts           # PDF generation controller using Puppeteer
 ├── routes/
-│   ├── auth.ts          # Authentication routes
-│   └── resume.ts        # Resume/PDF routes
+│   ├── auth.ts          # Authentication routes with middleware
+│   └── resume.ts        # Resume/PDF routes with rate limiting
 ├── models/
-│   ├── User.ts          # User model
-│   └── Resume.ts        # Resume data model
+│   ├── User.ts          # User model with OAuth provider support
+│   └── Resume.ts        # Resume data model with CRUD operations
 ├── db/
 │   ├── db.ts            # MySQL2 connection setup
 │   ├── knex.ts          # Knex configuration
 │   └── migrations/      # Database migrations
 ├── middlewares/
-│   └── auth.ts          # Authentication and access control middleware
+│   └── auth.ts          # Authentication, CSRF, and rate limiting middleware
 ├── types/
 │   ├── interface.user.ts        # User type definitions
 │   ├── interface.resume.ts      # Resume data type definitions
 │   └── types.controller-type.ts # Controller type definitions
 ├── utils/
-│   └── helper.ts         # Utility functions (e.g., HTML formatting)
-└── index.ts              # Main application entry point
+│   └── helper.ts         # Utility functions (ID generation, HTML formatting)
+└── index.ts              # Main application entry point with Express setup
 ```
 
 ---
@@ -158,12 +171,16 @@ src/
 - `created_at` (TIMESTAMP) - Account creation time
 - `updated_at` (TIMESTAMP) - Last update time
 
-### user_resumeData Table
+### user_resume_data Table
 - `id` (VARCHAR) - Primary key
 - `user_id` (VARCHAR) - Foreign key to users.id
-- `resume_data` (TEXT/JSON) - Resume content
-- `created_at` (TIMESTAMP)
-- `updated_at` (TIMESTAMP)
+- `resume_name` (VARCHAR) - Display name for the resume
+- `resume_slug_name` (VARCHAR) - URL-friendly slug for the resume
+- `resume_data` (TEXT/JSON) - Resume content in JSON format
+- `template` (VARCHAR) - Resume template identifier
+- `created_at` (TIMESTAMP) - Creation timestamp
+- `updated_at` (TIMESTAMP) - Last update timestamp
+- `deleted_at` (TIMESTAMP) - Soft delete timestamp (nullable)
 
 ---
 

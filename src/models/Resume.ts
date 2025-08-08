@@ -2,20 +2,21 @@ import knex from "../db/knex";
 import { ResumeData } from "@/types/interface.resume";
 
 export class ResumeModel {
-  private tableName = 'user_resumeData';
+  private tableName = 'user_resume_data';
 
-  async findByUserId(userId: string): Promise<ResumeData | null> {
+  async findByUserId(userId: string): Promise<ResumeData[]> {
     try {
-      const resume = await knex(this.tableName)
+      const resumes = await knex(this.tableName)
         .where('user_id', userId)
-        .first();
+        .whereNull('deleted_at')
+        .orderBy('created_at', 'asc');
 
-      return resume || null;
+      return resumes || []; // Always returns an array
     } catch (error) {
       console.error('Error finding user by User ID: ', error);
       throw error;
     }
-  }
+  };
 
   async create(resumeData: ResumeData): Promise<ResumeData> {
     try {
@@ -26,7 +27,7 @@ export class ResumeModel {
           updated_at: new Date()
         });
 
-      const resume = await this.findByUserId(resumeData.user_id);
+      const resume = await this.findByIdAndUserId(resumeData.id, resumeData.user_id);
       if (!resume) {
         throw new Error('Failed to save the user resume data - data not found after creation');
       }
@@ -36,21 +37,69 @@ export class ResumeModel {
       console.error('Error saving resume data: ', error);
       throw error;
     }
-  }
+  };
 
-  async update(userId: string, updateData: Partial<ResumeData>): Promise<ResumeData | null> {
+  async rename(id: string, userId: string, name: string, slug: string): Promise<ResumeData | null> {
     try {
       await knex(this.tableName)
-        .where('user_id', userId)
+        .where('id', id)
+        .andWhere('user_id', userId)
         .update({
-          ...updateData,
+          resume_name: name,
+          resume_slug_name: slug,
           updated_at: new Date()
         });
 
-      const resume = await this.findByUserId(userId);
+      const resume = await this.findByIdAndUserId(id, userId);
+      return resume;
+    } catch (error) {
+      console.error('Error renaming resume data: ', error);
+      throw error;
+    }
+  }
+
+  async update(id: string, userId: string, template: string, updateData: Partial<ResumeData>): Promise<ResumeData | null> {
+    try {
+      await knex(this.tableName)
+        .where('id', id)
+        .andWhere('user_id', userId)
+        .update({
+          ...updateData,
+          template: template,
+          updated_at: new Date()
+        });
+
+      const resume = await this.findByIdAndUserId(id, userId);
       return resume;
     } catch (error) {
       console.error('Error updating resume data: ', error);
+      throw error;
+    }
+  };
+
+  async findByIdAndUserId(id: string, userId: string): Promise<ResumeData | null> {
+    try {
+      const resume = await knex(this.tableName)
+        .where('id', id)
+        .andWhere('user_id', userId)
+        .whereNull('deleted_at')
+        .first()
+
+      return resume || null;
+    } catch (error) {
+      console.error('Error finding resume data: ', error);
+      throw error;
+    }
+  }
+
+  async delete(id: string, user_id: string): Promise<void> {
+    try {
+      await knex(this.tableName)
+        .where('id', id)
+        .andWhere('user_id', user_id)
+        .update({ deleted_at: knex.fn.now() });
+    } catch (error) {
+      console.error('Error soft deleting resume data: ', error);
       throw error;
     }
   }
