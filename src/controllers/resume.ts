@@ -118,6 +118,21 @@ const cloneResume: Controller = async (req, res) => {
   return res.json({ 'message': 'Resume has been cloned!' });
 };
 
+const saveExportedResume: Controller = async (req, res) => {
+  const { id, userId } = req.params;
+  const { template } = req.body;
+
+  const generatedId = generateId();
+  const resume = await resumeModel.findByIdAndUserId(id, userId);
+
+  if (!resume) {
+    return res.status(404).json({ message: 'Resume not found' });
+  }
+
+  await resumeModel.saveExportedResume(generatedId, userId, resume.id, template);
+  return res.json({ 'message': 'Resume successfully exported!' });
+};
+
 export {
   save_userData,
   fetchResumeData,
@@ -125,5 +140,6 @@ export {
   deleteResume,
   createInitResume,
   renameResume,
-  cloneResume
+  cloneResume,
+  saveExportedResume
 };

@@ -1,76 +1,69 @@
 import express from "express";
-import {
-  fetchResumeData,
-  save_userData,
-  fetchAllResumes,
-  deleteResume,
-  createInitResume,
-  renameResume,
-  cloneResume,
-  saveExportedResume
-} from '../controllers/resume';
-import generate_pdf from "../controllers/pdf";
+import generate_cl_pdf from "../controllers/cl-pdf";
 import { isAuthenticated, validateSocialLogin, authRateLimit } from '../middlewares/auth';
+import { save_userData, fetchAllCL, createInitCL, cloneCL, deleteCL, fetchCLData, renameCL, saveExportedCL } from "../controllers/cover-letter";
 
-const pdfRouter = express.Router();
+const clRouter = express.Router();
 // Apply authentication middleware to ensure user is logged in with Google or GitHub
-pdfRouter.post('/generate',
+clRouter.post('/generate-cl',
   authRateLimit(100, 30 * 60 * 1000),
   isAuthenticated,
   validateSocialLogin(['google', 'github']),
-  generate_pdf
+  generate_cl_pdf
 );
 
-pdfRouter.post('/save-data',
+clRouter.post('/save-data',
   authRateLimit(100, 30 * 60 * 1000),
   isAuthenticated,
   validateSocialLogin(['google', 'github']),
   save_userData
 );
 
-pdfRouter.get('/fetch-data/:id/:userId',
+clRouter.get('/fetch-cover-letters/:userId',
   isAuthenticated,
   validateSocialLogin(['google', 'github']),
-  fetchResumeData
+  fetchAllCL
 );
 
-pdfRouter.get('/fetch-resumes/:userId',
-  isAuthenticated,
-  validateSocialLogin(['google', 'github']),
-  fetchAllResumes
-);
-
-pdfRouter.delete('/delete-resume/:id/:userId',
-  isAuthenticated,
-  validateSocialLogin(['google', 'github']),
-  deleteResume
-);
-
-pdfRouter.post('/create-init/:userId',
+clRouter.post('/create-init/:userId',
   authRateLimit(100, 30 * 60 * 1000),
   isAuthenticated,
   validateSocialLogin(['google', 'github']),
-  createInitResume
+  createInitCL
 );
 
-pdfRouter.post('/rename/:id/:userId',
+clRouter.post('/clone/:id/:userId',
   authRateLimit(100, 30 * 60 * 1000),
   isAuthenticated,
   validateSocialLogin(['google', 'github']),
-  renameResume
+  cloneCL
 );
 
-pdfRouter.post('/clone/:id/:userId',
+clRouter.delete('/delete/:id/:userId',
   authRateLimit(100, 30 * 60 * 1000),
   isAuthenticated,
   validateSocialLogin(['google', 'github']),
-  cloneResume
+  deleteCL
 );
 
-pdfRouter.post('/save-exports/:id/:userId',
+clRouter.get('/fetch-data/:id/:userId',
+  authRateLimit(100, 30 * 60 * 1000),
   isAuthenticated,
   validateSocialLogin(['google', 'github']),
-  saveExportedResume
+  fetchCLData
 );
 
-export default pdfRouter;
+clRouter.put('/rename-cl/:id/:userId',
+  authRateLimit(100, 30 * 60 * 1000),
+  isAuthenticated,
+  validateSocialLogin(['google', 'github']),
+  renameCL
+);
+
+clRouter.post('/save-exports/:id/:userId',
+  authRateLimit(100, 30 * 60 * 1000),
+  isAuthenticated,
+  validateSocialLogin(['google', 'github']),
+  saveExportedCL
+)
+export default clRouter;

@@ -3,6 +3,7 @@ import { ResumeData } from "@/types/interface.resume";
 
 export class ResumeModel {
   private tableName = 'user_resume_data';
+  private tableExports = 'resume_exports';
 
   async findByUserId(userId: string): Promise<ResumeData[]> {
     try {
@@ -102,6 +103,18 @@ export class ResumeModel {
       console.error('Error soft deleting resume data: ', error);
       throw error;
     }
+  }
+
+  async saveExportedResume(id: string, userId: string, resumeId: string, template: string): Promise<void> {
+    await knex(this.tableExports)
+      .insert({
+        id: id,
+        user_id: userId,
+        resume_id: resumeId,
+        export_format: 'pdf',
+        template: template,
+        created_at: new Date()
+      });
   }
 }
 
