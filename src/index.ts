@@ -33,7 +33,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS in production
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'none'
   }
 }));
 
@@ -47,7 +48,7 @@ app.use((req, res, next) => {
   const token = req.csrfToken(); // New token each time
   res.cookie('XSRF-TOKEN', token, {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'none',
     secure: true,
     signed: true
   });
