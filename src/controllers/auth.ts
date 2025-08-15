@@ -226,7 +226,7 @@ const googleCallback = async (req: Request, res: Response, next: NextFunction) =
                   avatar: '${user.avatar || ''}',
                   token: '${token}'
                 }
-              }, 'http://localhost:5173');
+              }, '${process.env.FRONTEND_URL}');
               window.close();
             } else {
               window.location.href = '/dashboard';
@@ -321,7 +321,7 @@ const githubCallback = async (req: Request, res: Response, next: NextFunction) =
                   avatar: '${user.avatar || ''}',
                   token: '${token}'
                 }
-              }, 'http://localhost:5173');
+              }, '${process.env.FRONTEND_URL}');
               window.close();
             } else {
               window.location.href = '/dashboard';
