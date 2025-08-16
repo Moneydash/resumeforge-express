@@ -39,6 +39,8 @@ app.use(session({
   }
 }));
 
+app.set('trust proxy', 1); // Trust first proxy for secure cookies in production
+
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
